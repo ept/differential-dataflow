@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Spine","An append-only collection of update tuples."]]});

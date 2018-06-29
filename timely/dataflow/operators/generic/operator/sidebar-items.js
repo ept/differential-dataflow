@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["source","Creates a new data stream source for a scope."]],"trait":[["Operator","Methods to construct generic streaming and blocking operators."]]});

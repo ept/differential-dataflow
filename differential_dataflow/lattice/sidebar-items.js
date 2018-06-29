@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Lattice","A bounded partially ordered type supporting joins and meets."]]});

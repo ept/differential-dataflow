@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AbomonatedBatchCursor","Wrapper to provide cursor to nested scope."],["AbomonatedBatcher","Wrapper type for batching reference counted batches."],["AbomonatedBuilder","Wrapper type for building reference counted batches."],["AbomonatedMerger","Wrapper type for merging reference counted batches."]]});

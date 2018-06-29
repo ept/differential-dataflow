@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["freeze","Freezes updates to an arrangement using a supplied function."]],"struct":[["BatchCursorFreeze","Wrapper to provide cursor to nested scope."],["BatchFreeze","Wrapper to provide batch to nested scope."],["CursorFreeze","Wrapper to provide cursor to nested scope."],["TraceFreeze","Wrapper to provide trace to nested scope."]]});

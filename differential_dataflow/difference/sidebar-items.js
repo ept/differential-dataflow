@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DiffPair","The difference defined by a pair of difference elements."]],"trait":[["Diff","A type that can be treated as a difference."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["aggregate","Accumulate data in `collection` into all powers-of-two intervals containing them."],["broadcast","Produces the accumulated values at each of the `usize` locations in `queries`."]],"trait":[["PrefixSum","Extension trait for the prefix_sum method."]]});

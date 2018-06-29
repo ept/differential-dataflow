@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Content","A batch of data, represented either as serialized bytes or typed Rust objects."]],"struct":[["Message","A serializable representation of timestamped data."]]});

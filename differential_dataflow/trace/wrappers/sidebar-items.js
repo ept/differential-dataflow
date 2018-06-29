@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["enter","Wrappers to provide trace access to nested scopes."],["freeze","Wrappers to transform the timestamps of updates."],["rc","A reference-counted wrapper sharing one owned trace."]]});

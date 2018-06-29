@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CursorPair","A cursor over the combined updates of two different cursors."]]});

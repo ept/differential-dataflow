@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `differential_dataflow` crate."><meta name="keywords" content="rust, rustlang, rust-lang, differential_dataflow"><title>differential_dataflow - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><p class='location'>Crate differential_dataflow</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#traits">Traits</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'differential_dataflow', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>differential_dataflow</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/differential_dataflow/lib.rs.html#1-104' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Differential dataflow is a high-throughput, low-latency data-parallel programming framework.</p>
+<p>Differential dataflow programs are written in a collection-oriented style, where you transform
+collections of records using traditional operations like <code>map</code>, <code>filter</code>, <code>join</code>, and <code>group_by</code>.
+Differential dataflow also includes the less traditional operation <code>iterate</code>, which allows you
+to repeatedly apply differential dataflow transformations to collections.</p>
+<p>Once you have defined a differential dataflow computation, you may then add records to or remove
+records from its inputs; the system will automatically update the computation's outputs with the
+appropriate corresponding additions and removals, and report these changes to you.</p>
+<p>Differential dataflow is built on the <a href="https://github.com/frankmcsherry/timely-dataflow">timely dataflow</a>
+framework for data-parallel programming which automatically parallelizes across multiple threads,
+processes, and computers. Furthermore, because it uses timely dataflow's primitives, it seamlessly
+inter-operates with other timely dataflow computations.</p>
+<p>Differential dataflow is still very much a work in progress, with features and ergonomics still
+wildly in development. It is generally improving, though.</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>This fragment creates a collection of pairs of integers, imagined as graph edges, and then counts
+first the number of times the source coordinate occurs, and then the number of times each count
+occurs, giving us a sense for the distribution of degrees in the graph.</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+<span class="comment">// create a a degree counting differential dataflow</span>
+<span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">input</span>, <span class="ident">probe</span>) <span class="op">=</span> <span class="ident">worker</span>.<span class="ident">dataflow</span>(<span class="op">|</span><span class="ident">scope</span><span class="op">|</span> {
+
+    <span class="comment">// create edge input, count a few ways.</span>
+    <span class="kw">let</span> (<span class="ident">input</span>, <span class="ident">edges</span>) <span class="op">=</span> <span class="ident">scope</span>.<span class="ident">new_collection</span>();
+
+    <span class="comment">// extract the source field, and then count.</span>
+    <span class="kw">let</span> <span class="ident">degrs</span> <span class="op">=</span> <span class="ident">edges</span>.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">src</span>, <span class="ident">_dst</span>)<span class="op">|</span> <span class="ident">src</span>)
+                     .<span class="ident">count</span>();
+
+    <span class="comment">// extract the count field, and then count them.</span>
+    <span class="kw">let</span> <span class="ident">distr</span> <span class="op">=</span> <span class="ident">degrs</span>.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_src</span>, <span class="ident">cnt</span>)<span class="op">|</span> <span class="ident">cnt</span>)
+                     .<span class="ident">count</span>();
+
+    <span class="comment">// report the changes to the count collection, notice when done.</span>
+    <span class="kw">let</span> <span class="ident">probe</span> <span class="op">=</span> <span class="ident">distr</span>.<span class="ident">inspect</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;observed: {:?}&quot;</span>, <span class="ident">x</span>))
+                     .<span class="ident">probe</span>();
+
+    (<span class="ident">input</span>, <span class="ident">probe</span>)
+});</pre>
+<p>Now assembled, we can drive the computation like a timely dataflow computation, by pushing update
+records (triples of data, time, and change in count) at the <code>input</code> stream handle. The <code>probe</code> is
+how timely dataflow tells us that we have seen all corresponding output updates (in case there are
+none).</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+<span class="kw">loop</span> {
+    <span class="kw">let</span> <span class="ident">time</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">epoch</span>();
+    <span class="kw">for</span> <span class="ident">round</span> <span class="kw">in</span> <span class="ident">time</span> .. <span class="ident">time</span> <span class="op">+</span> <span class="number">100</span> {
+        <span class="ident">input</span>.<span class="ident">advance_to</span>(<span class="ident">round</span>);
+        <span class="ident">input</span>.<span class="ident">insert</span>((<span class="ident">round</span> <span class="op">%</span> <span class="number">13</span>, <span class="ident">round</span> <span class="op">%</span> <span class="number">7</span>));
+    }
+
+    <span class="ident">input</span>.<span class="ident">flush</span>();
+    <span class="kw">while</span> <span class="ident">probe</span>.<span class="ident">less_than</span>(<span class="ident">input</span>.<span class="ident">time</span>()) {
+       <span class="ident">worker</span>.<span class="ident">step</span>();
+    }
+}</pre>
+<p>This example should print out the 100 changes in the output, in this case each reflecting the increase
+of some node degree by one (typically four output changes, corresponding to the addition and deletion
+of the new and old counts of the old and new degrees of the affected node).</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub use collection::<a class="struct" href="../differential_dataflow/collection/struct.Collection.html" title="struct differential_dataflow::collection::Collection">Collection</a>;</code></td></tr><tr><td><code>pub use collection::<a class="trait" href="../differential_dataflow/collection/trait.AsCollection.html" title="trait differential_dataflow::collection::AsCollection">AsCollection</a>;</code></td></tr><tr><td><code>pub use hashable::<a class="trait" href="../differential_dataflow/hashable/trait.Hashable.html" title="trait differential_dataflow::hashable::Hashable">Hashable</a>;</code></td></tr><tr><td><code>pub use difference::<a class="trait" href="../differential_dataflow/difference/trait.Diff.html" title="trait differential_dataflow::difference::Diff">Diff</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="algorithms/index.html"
+                                  title='mod differential_dataflow::algorithms'>algorithms</a></td>
+                           <td class='docblock-short'>
+                                <p>Common algorithms constructed from differential dataflow operators.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="collection/index.html"
+                                  title='mod differential_dataflow::collection'>collection</a></td>
+                           <td class='docblock-short'>
+                                <p>Types and traits associated with collections of data.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="difference/index.html"
+                                  title='mod differential_dataflow::difference'>difference</a></td>
+                           <td class='docblock-short'>
+                                <p>A type that can be treated as a difference.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="hashable/index.html"
+                                  title='mod differential_dataflow::hashable'>hashable</a></td>
+                           <td class='docblock-short'>
+                                <p>Traits and types related to the distribution of data.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="input/index.html"
+                                  title='mod differential_dataflow::input'>input</a></td>
+                           <td class='docblock-short'>
+                                <p>Input sessions for simplified collection updates.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="lattice/index.html"
+                                  title='mod differential_dataflow::lattice'>lattice</a></td>
+                           <td class='docblock-short'>
+                                <p>Partially ordered elements with a least upper bound.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="operators/index.html"
+                                  title='mod differential_dataflow::operators'>operators</a></td>
+                           <td class='docblock-short'>
+                                <p>Specialize differential dataflow operators.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="trace/index.html"
+                                  title='mod differential_dataflow::trace'>trace</a></td>
+                           <td class='docblock-short'>
+                                <p>Traits and datastructures representing a collection trace.</p>
+
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Data.html"
+                                  title='trait differential_dataflow::Data'>Data</a></td>
+                           <td class='docblock-short'>
+                                <p>A composite trait for data types usable in differential dataflow.</p>
+
+                           </td>
+                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "differential_dataflow";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

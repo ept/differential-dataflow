@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["TraceBox","A wrapper around a trace which tracks the frontiers of all referees."],["TraceRc","A handle to a shared trace."]]});

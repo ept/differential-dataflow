@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Consolidate","An extension method for consolidating weighted streams."]]});

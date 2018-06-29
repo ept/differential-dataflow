@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CoreVariable","A recursive variable with a generic timestamp type."],["Variable","A differential dataflow collection variable"]],"trait":[["Iterate","An extension trait for the `iterate` method."]]});

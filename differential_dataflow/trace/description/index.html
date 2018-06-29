@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `description` mod in crate `differential_dataflow`."><meta name="keywords" content="rust, rustlang, rust-lang, description"><title>differential_dataflow::trace::description - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><p class='location'>Module description</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li></ul></div><p class='location'><a href='../../index.html'>differential_dataflow</a>::<wbr><a href='../index.html'>trace</a></p><script>window.sidebarCurrent = {name: 'description', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>differential_dataflow</a>::<wbr><a href='../index.html'>trace</a>::<wbr><a class="mod" href=''>description</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../../src/differential_dataflow/trace/description.rs.html#1-95' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Descriptions of intervals of partially ordered times.</p>
+<p>A description provides what intends to be an unambiguous characterization of a batch of
+updates. We do assume that these updates are in the context of a known computation and
+known input, so there is a well-defined &quot;correct answer&quot; for the full set of updates.</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+     <span class="ident">full</span> <span class="op">=</span> { (<span class="ident">data</span>, <span class="ident">time</span>, <span class="ident">diff</span>) }</pre>
+<p>Our aim with a description is to specify a subset of these updates unambiguously.</p>
+<p>Each description contains three frontiers, sets of mutually incomparable partially ordered
+times. The first two frontiers are <code>lower</code> and <code>upper</code>, and they indicate the subset of
+<code>full</code> represented in the batch: those updates whose times are greater or equal to some
+element of <code>lower</code> but not greater or equal to any element of <code>upper</code>.</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+    <span class="ident">subset</span> <span class="op">=</span> { (<span class="ident">data</span>, <span class="ident">time</span>, <span class="ident">diff</span>) <span class="kw">in</span> <span class="ident">full</span> <span class="op">|</span> <span class="ident">lower</span>.<span class="ident">any</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">le</span>(<span class="ident">time</span>)) <span class="op">&amp;&amp;</span> 
+                                           <span class="op">!</span><span class="ident">upper</span>.<span class="ident">any</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">le</span>(<span class="ident">time</span>)) }</pre>
+<p>The third frontier <code>since</code> is used to indicate that the times presented by the batch may
+no longer reflect the values in <code>subset</code> above. Although the updates are precisely those
+bound by <code>lower</code> and <code>upper</code>, we may have <em>advanced</em> some of the times.</p>
+<p>The guarantee provided by a batch is that for any time greater or equal to some element of
+<code>since</code>, the accumulated weight of batch updates before that time is identical to the accumulated
+weights of updates from <code>full</code> at times greater or equal to an element of <code>lower</code>, greater
+or equal to no element of <code>upper</code>, and less or equal to the query time.</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+    <span class="kw">for</span> <span class="ident">all</span> <span class="ident">times</span> <span class="ident">t1</span>:
+ 
+       <span class="kw">if</span> <span class="ident">since</span>.<span class="ident">any</span>(<span class="op">|</span><span class="ident">t2</span><span class="op">|</span> <span class="ident">t2</span>.<span class="ident">less_equal</span>(<span class="ident">t1</span>)) <span class="ident">then</span>:
+
+           <span class="kw">for</span> <span class="ident">all</span> <span class="ident">data</span>:
+
+               <span class="ident">sum</span> <span class="ident">x</span> <span class="kw">where</span> (<span class="ident">data</span>, <span class="ident">t2</span>, <span class="ident">x</span>) <span class="kw">in</span> <span class="ident">batch</span> <span class="ident">and</span> <span class="ident">t2</span>.<span class="ident">less_equal</span>(<span class="ident">t1</span>)
+           <span class="op">==</span>
+               <span class="ident">sum</span> <span class="ident">x</span> <span class="kw">where</span> (<span class="ident">data</span>, <span class="ident">t2</span>, <span class="ident">x</span>) <span class="kw">in</span> <span class="ident">full</span> <span class="ident">and</span>  <span class="ident">t2</span>.<span class="ident">less_equal</span>(<span class="ident">t1</span>)
+                                                 <span class="ident">and</span>  <span class="ident">lower</span>.<span class="ident">any</span>(<span class="op">|</span><span class="ident">t3</span><span class="op">|</span> <span class="ident">t3</span>.<span class="ident">less_equal</span>(<span class="ident">t2</span>))
+                                                 <span class="ident">and</span> <span class="op">!</span><span class="ident">upper</span>.<span class="ident">any</span>(<span class="op">|</span><span class="ident">t3</span><span class="op">|</span> <span class="ident">t3</span>.<span class="ident">less_equal</span>(<span class="ident">t2</span>))</pre>
+<p>Very importantly, this equality does not make any other guarantees about the contents of
+the batch when one iterates through it. There are some consequences of the math that can
+be relied upon, though.</p>
+<p>The most important consequence is that when <code>since &lt;= lower</code> the contents of the batch
+must be identical to the updates in <code>subset</code>. If it is ever the case that <code>since</code> is
+in advance of <code>lower</code>, consumers of the batch must take care that they not use the times
+observed in the batch without ensuring that they are appropriately advanced (typically by
+<code>since</code>). Failing to do so may produce updates that are not in advance of <code>since</code>, which
+will often be a logic bug, as <code>since</code> does not advance without a corresponding advance in
+times at which data may possibly be sent.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Description.html"
+                                  title='struct differential_dataflow::trace::description::Description'>Description</a></td>
+                           <td class='docblock-short'>
+                                <p>Describes an interval of partially ordered times.</p>
+
+                           </td>
+                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../../";window.currentCrate = "differential_dataflow";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

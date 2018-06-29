@@ -1,0 +1,17 @@
+var ALIASES = {};
+ALIASES['abomonation'] = {};
+ALIASES['abomonation_derive'] = {};
+ALIASES['byteorder'] = {};
+ALIASES['differential_dataflow'] = {};
+ALIASES['fnv'] = {};
+ALIASES['getopts'] = {};
+ALIASES['libc'] = {};
+ALIASES['quote'] = {};
+ALIASES['syn'] = {};
+ALIASES['synom'] = {};
+ALIASES['synstructure'] = {};
+ALIASES['time'] = {};
+ALIASES['timely'] = {};
+ALIASES['timely_communication'] = {};
+ALIASES['timely_sort'] = {};
+ALIASES['unicode_xid'] = {};

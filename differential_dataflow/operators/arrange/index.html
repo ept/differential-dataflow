@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `arrange` mod in crate `differential_dataflow`."><meta name="keywords" content="rust, rustlang, rust-lang, arrange"><title>differential_dataflow::operators::arrange - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><p class='location'>Module arrange</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'><a href='../../index.html'>differential_dataflow</a>::<wbr><a href='../index.html'>operators</a></p><script>window.sidebarCurrent = {name: 'arrange', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>differential_dataflow</a>::<wbr><a href='../index.html'>operators</a>::<wbr><a class="mod" href=''>arrange</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../../src/differential_dataflow/operators/arrange.rs.html#1-754' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Arranges a collection into a re-usable trace structure.</p>
+<p>The <code>arrange</code> operator applies to a differential dataflow <code>Collection</code> and returns an <code>Arranged</code>
+structure, provides access to both an indexed form of accepted updates as well as a stream of
+batches of newly arranged updates.</p>
+<p>Several operators (<code>join</code>, <code>group</code>, and <code>cogroup</code>, among others) are implemented against <code>Arranged</code>,
+and can be applied directly to arranged data instead of the collection. Internally, the operators
+will borrow the shared state, and listen on the timely stream for shared batches of data. The
+resources to index the collection---communication, computation, and memory---are spent only once,
+and only one copy of the index needs to be maintained as the collection changes.</p>
+<p>The arranged collection is stored in a trace, whose append-only operation means that it is safe to
+share between the single <code>arrange</code> writer and multiple readers. Each reader is expected to interrogate
+the trace only at times for which it knows the trace is complete, as indicated by the frontiers on its
+incoming channels. Failing to do this is &quot;safe&quot; in the Rust sense of memory safety, but the reader may
+see ill-defined data at times for which the trace is not complete. (All current implementations
+commit only completed data to the trace).</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Arranged.html"
+                                  title='struct differential_dataflow::operators::arrange::Arranged'>Arranged</a></td>
+                           <td class='docblock-short'>
+                                <p>An arranged collection of <code>(K,V)</code> values.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.BatchWrapper.html"
+                                  title='struct differential_dataflow::operators::arrange::BatchWrapper'>BatchWrapper</a></td>
+                           <td class='docblock-short'>
+                                <p>Wrapper type to permit transfer of <code>Rc</code> types, as in batch.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.TraceAgent.html"
+                                  title='struct differential_dataflow::operators::arrange::TraceAgent'>TraceAgent</a></td>
+                           <td class='docblock-short'>
+                                <p>A <code>TraceReader</code> wrapper which can be imported into other dataflows.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.TraceWriter.html"
+                                  title='struct differential_dataflow::operators::arrange::TraceWriter'>TraceWriter</a></td>
+                           <td class='docblock-short'>
+                                <p>A trace writer capability.</p>
+
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Arrange.html"
+                                  title='trait differential_dataflow::operators::arrange::Arrange'>Arrange</a></td>
+                           <td class='docblock-short'>
+                                <p>A type that can be arranged into a trace of type <code>T</code>.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ArrangeByKey.html"
+                                  title='trait differential_dataflow::operators::arrange::ArrangeByKey'>ArrangeByKey</a></td>
+                           <td class='docblock-short'>
+                                <p>Arranges something as <code>(Key,Val)</code> pairs according to a type <code>T</code> of trace.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ArrangeBySelf.html"
+                                  title='trait differential_dataflow::operators::arrange::ArrangeBySelf'>ArrangeBySelf</a></td>
+                           <td class='docblock-short'>
+                                <p>Arranges something as <code>(Key, ())</code> pairs according to a type <code>T</code> of trace.</p>
+
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.query.html"
+                                  title='fn differential_dataflow::operators::arrange::query'>query</a></td>
+                           <td class='docblock-short'>
+                                <p>Report values associated with keys at certain times.</p>
+
+                           </td>
+                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../../";window.currentCrate = "differential_dataflow";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

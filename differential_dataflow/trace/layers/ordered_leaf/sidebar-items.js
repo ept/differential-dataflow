@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["advance","Reports the number of elements satisfing the predicate."]],"struct":[["OrderedLeaf","A layer of unordered values. "],["OrderedLeafBuilder","A builder for unordered values."],["OrderedLeafCursor","A cursor for walking through an unordered sequence of values."]]});

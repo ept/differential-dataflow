@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Binary","Methods to construct generic streaming and blocking binary operators."]]});
