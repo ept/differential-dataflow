@@ -9,6 +9,7 @@ use differential_dataflow::input::Input;
 use differential_dataflow::operators::*;
 use differential_dataflow::operators::arrange::ArrangeByKey;
 use differential_dataflow::Collection;
+use timely::dataflow::ProbeHandle;
 
 type Id = (usize, usize);
 
@@ -16,8 +17,10 @@ fn main() {
 
     timely::execute_from_args(std::env::args(), move |worker| {
 
+        let timer = ::std::time::Instant::now();
         let peers = worker.peers();
         let index = worker.index();
+        let mut probe = ProbeHandle::new();
 
         let (mut insert, mut remove, mut assign) = worker.dataflow::<_,_,_>(|scope| {
 
@@ -29,6 +32,7 @@ fn main() {
             let has_child = insert.map(|(_, x)| x).distinct();
 
             let insert_temp = insert.map(|(x,y)| (y,x));
+            /*
             let later_child = insert_temp.join(&insert_temp)
                                          .filter(|&(k,x,y)| x > y)  // tuple order is lexicographic
                                          .map(|(k,x,y)| (k,y))
@@ -45,6 +49,16 @@ fn main() {
 
             // NB: Almost certainly a more efficient way to do this, e.g. `min`.
             let next_sibling = later_sibling.map(|x| (x,())).antijoin(&later_sibling2.distinct()).map(|(x,())| x);
+            */
+
+            let siblings = insert_temp.group(|key, input, output|
+                                             for i in 1..input.len() {
+                                                 output.push(((*input[i].0, *input[i-1].0), 1));
+                                             });
+
+            let next_sibling = siblings.map(|(parent, pair)| pair);
+
+            let first_child = siblings.map(|(parent, (child1, child2))| (parent, child2)).negate().concat(&insert_temp);
 
             let has_next_sibling: Collection<_,Id,_> = next_sibling.map(|(x,_)| x).distinct();
 
@@ -93,7 +107,8 @@ fn main() {
             let result = next_visible.map(|(prev,next)| (next,prev))
                                      .join(&current_value)
                                      .map(|(next,prev,value)| (prev.0, next.0, value));
-            next_elem.consolidate().inspect(|x| println!("{:?}", x));
+            result.probe_with(&mut probe);
+            result.consolidate().inspect(|x| println!("{:?}", x));
 
             (i_handle, r_handle, a_handle)
         });
@@ -105,19 +120,39 @@ fn main() {
         insert.insert(((5,0), (2,0)));
         insert.insert(((6,0), (2,0)));
 
-        /*
-            assign([0,1], [0,0], "-"). // need to assign a dummy value to the head element?
-            assign([2,1], [2,0], "H").
-            assign([6,1], [6,0], "e"). assign([6,2], [6,0], "i"). remove([6,2]).
-            assign([5,1], [5,0], "l"). remove([5,1]). assign([5,3], [5,0], "y").
-            assign([3,1], [3,0], "l"). remove([3,1]).
-            assign([1,1], [1,0], "o"). assign([1,2], [1,0], "i"). remove([1,1]). remove([1,2]).
-            assign([4,1], [4,0], "!"). assign([4,2], [4,0], "?").
-            */
         insert.advance_to(1); insert.flush();
         remove.advance_to(1); remove.flush();
         assign.advance_to(1); assign.flush();
 
+        while probe.less_than(insert.time()) {
+            worker.step();
+        }
+
+        assign.insert(((0,1), (0,0), "-".to_string())); // need to assign a dummy value to the head element?
+        assign.insert(((2,1), (2,0), "H".to_string()));
+        assign.insert(((6,1), (6,0), "e".to_string()));
+        assign.insert(((6,2), (6,0), "i".to_string()));
+        remove.insert((6,2));
+        assign.insert(((5,1), (5,0), "l".to_string()));
+        remove.insert((5,1));
+        assign.insert(((5,3), (5,0), "y".to_string()));
+        assign.insert(((3,1), (3,0), "l".to_string()));
+        remove.insert((3,1));
+        assign.insert(((1,1), (1,0), "o".to_string()));
+        assign.insert(((1,2), (1,0), "i".to_string()));
+        remove.insert((1,1));
+        remove.insert((1,2));
+        assign.insert(((4,1), (4,0), "!".to_string()));
+        assign.insert(((4,2), (4,0), "?".to_string()));
+
+        insert.advance_to(2); insert.flush();
+        remove.advance_to(2); remove.flush();
+        assign.advance_to(2); assign.flush();
+
+        while probe.less_than(insert.time()) {
+            worker.step();
+        }
+        println!("{:?}", timer.elapsed());
 
     }).unwrap();
 }
