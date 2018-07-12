@@ -108,11 +108,12 @@ fn main() {
                                      .join(&current_value)
                                      .map(|(next,prev,value)| (prev.0, next.0, value));
             result.probe_with(&mut probe);
-            result.consolidate().inspect(|x| println!("{:?}", x));
+            //result.consolidate().inspect(|x| println!("{:?}", x));
 
             (i_handle, r_handle, a_handle)
         });
 
+        /*
         insert.insert(((1,0), (0,0)));
         insert.insert(((2,0), (0,0)));
         insert.insert(((3,0), (2,0)));
@@ -148,6 +149,36 @@ fn main() {
         insert.advance_to(2); insert.flush();
         remove.advance_to(2); remove.flush();
         assign.advance_to(2); assign.flush();
+        */
+
+        let file = BufReader::new(File::open("trace.txt").unwrap());
+        for readline in file.lines() {
+            let line = readline.ok().expect("read error");
+
+            if line.starts_with("insert") {
+                let mut elts = line[..].split_whitespace();
+                elts.next();
+                let id_ctr:   usize = elts.next().unwrap().parse().ok().expect("malformed id_ctr");
+                let id_node:  usize = elts.next().unwrap().parse().ok().expect("malformed id_node");
+                let ref_ctr:  usize = elts.next().unwrap().parse().ok().expect("malformed ref_ctr");
+                let ref_node: usize = elts.next().unwrap().parse().ok().expect("malformed ref_node");
+                insert.insert(((id_ctr, id_node), (ref_ctr, ref_node)));
+                assign.insert(((id_ctr, id_node), (id_ctr, id_node), "".to_string()));
+            }
+
+            if line.starts_with("delete") {
+                let mut elts = line[..].split_whitespace();
+                elts.next();
+                let ref_ctr:  usize = elts.next().unwrap().parse().ok().expect("malformed ref_ctr");
+                let ref_node: usize = elts.next().unwrap().parse().ok().expect("malformed ref_node");
+                remove.insert((ref_ctr, ref_node));
+            }
+        }
+
+        insert.advance_to(1); insert.flush();
+        remove.advance_to(1); remove.flush();
+        assign.advance_to(1); assign.flush();
+        println!("{:?}", timer.elapsed());
 
         while probe.less_than(insert.time()) {
             worker.step();
