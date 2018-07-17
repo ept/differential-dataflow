@@ -86,8 +86,13 @@ fn main() {
 
             let has_value = current_value.map(|(elem,_)| elem).distinct(); // distinct optional?
 
-            let skip_blank = next_elem.iterate(|inner| {
+            let next_elem_with_value = next_elem.map(|(from,to)| (to,from))
+                                                .semijoin(&has_value)
+                                                .map(|(to,from)| (from,to));
 
+            let skip_blank = next_elem_with_value.iterate(|inner| {
+
+                let next_elem_with_value = next_elem_with_value.enter(&inner.scope());
                 let next_elem = next_elem.enter(&inner.scope());
                 let has_value = has_value.enter(&inner.scope());
 
@@ -95,7 +100,7 @@ fn main() {
                          .antijoin(&has_value)
                          .join(&inner)
                          .map(|(_via, from, to)| (from, to))
-                         .concat(&next_elem)
+                         .concat(&next_elem_with_value)
                          .distinct()
             });
 
